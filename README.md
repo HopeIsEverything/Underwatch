@@ -1,67 +1,112 @@
-# Underwatch
+#Underwatch
 Underwatch is a utility for tracking changes to the ini and save files for Undertale.
-Underwatch uses Python 3.4 and the Clint module for coloured output.
 
+The core functionality of the Underwatch utility was created by dmnh.
+
+#Tools Used
+* Python (3.4)
+* configparser is used for managing the config file.
+* Clint is used for coloured output.
+* cx_free is used to create the windows executable.
+
+
+#Tidazi's Changes
+##Underwatch 0.4
+* Fixed the bug where files are reported as modified but none of the values have changed.
+* Configuration is now handled by a single underwatch.ini file.
+* Created a simple icon for Underwatch.
+
+	
+
+#Coming Soon...
+* Add descriptions to "Undertale.ini" change reports.
+* More robust support for timestamps.
+
+
+#Underwatch Reports
 By default, any changes are printed out to the terminal in the following format:
 
-    file9 changed
-    (54) 4  >> 5  (Spared count)
-    (56) 81  >> 83  (Skipped count)
-    (549) 23374  >> 24727  (Play time)
-    
-    undertale.ini changed
-    [General]
-    Room: 312.000000 >> 12.000000
-    Time: 23374.000000 >> 24727.000000
+	file0 had 3 changes detected.
+	(56) 4349  >> 4351  (Skipped count)
+	(493) 1  >> 2  (unknown)
+	(549) 673344  >> 673637  (Play time)
+
+	file9 had 3 changes detected.
+	(56) 4349  >> 4351  (Skipped count)
+	(493) 1  >> 2  (unknown)
+	(549) 673344  >> 673637  (Play time)
+
+	undertale.ini had 1 change detected.
+	[General]
+	Time: 673344.000000 >> 673637.000000
+
 
 Changes to the save file include the line number and a description if one is known.
-I've taken my descriptions from the Traveler's Guide to the Underland:
+
+Descriptions were largely taken from the Traveler's Guide to the Underland:
+
 https://docs.google.com/document/d/1h_vdEFZMtefD-nkCZ7ODzArp7BRbGgN0_7HQ1XjTT8Y/edit#heading=h.a5d6q4uvp7b8
-and from some experimentation.
 
-The descriptions for save file lines are stored in _saveFile and can be modified and added to, the -u switch allows the descriptions to be updated while Underwatch is running.
 
-Timestamps can be added to the output with the -t switch, the format for the timestamp can optionally be supplied as an argument, or will default to [%H:%M:%S]
+The descriptions for save file lines are stored in _saveFile and can be modified and added to.
 
-All python time format codes can be used, a full list is included at the end of this readme
+On first run, Underwatch will create the config file (underwatch.ini) with default options.
 
-On first run, Underwatch will confirm the directory for Undertale data (usually C:\\Users\\<username>\\AppData\\Local\\UNDERTALE), once set the _path file is created and used in future.
+It will also confirm the directory for Undertale data, and create the default directory for output files.
 
-The -p option allows a custom path to be supplied, overriding the _path file or skipping its creation
+-----
 
-The -f or -s switch can be used to output changes to files. -f stores all changes in a single log file, while -s stores each set of changes in a new timestamped file.
+#Configuration Options
 
-By default the timestamp format is %Y-%m-%d %H.%M.%S, this can be overridden by supplying a format with -t
+	[Undertale]
+		savePath 
+			The directory that the Undertale save files are stored in.
+			This is usually C:\Users\<username>\AppData\Local\UNDERTALE.
 
-By default, Underwatch closes when Undertale closes, this behaviour can be overridden with -x
+	[Underwatch]
+		outputPath
+			The output path for log files.
+			This defaults to a subdirectory called "outputLogs" within the Underwatch directory.
 
-    usage: underwatch [-h] [-p PATH] [-f | -s] [-m] [-o PATH] [-t [FORMAT]] [-u] [-q]
-                   [-x]
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      -p PATH, --path PATH  explicitly set the Undertale save folder, overrides
-                            _path file
-      -f, --file            output all changes to Underwatch.log.
-      -s, --sequence        output each change to a timestamped file. The format
-                            is %Y-%m-%d %H.%M.%S by default, and can be changed
-                            with -t
-      -m, --multiple        output changes to multiple files (save0.log,
-                            undertale.ini.log, etc.)
-      -o PATH, --out PATH   explicitly set the output directory, default is the
-                            working directory
-      -t [FORMAT], --time [FORMAT]
-                            output a timestamp with each change. The default
-                            format is [%H:%M:%S], see readme.txt for format
-                            options
-      -u, --update          monitor _saveFile, allows updating of descriptions
-                            without restarting
-      -q, --quiet           don't ouput to the screen.
-      -x, --no-exit         prevent Underwatch from closing when Undertale closes
-                            (CRTL+C to kill Underwatch)
-						
-						
-Python datetime format codes
+		outputMode
+			screen
+				No file output. Only displays changes on the screen.
+			file
+				All output is stored to a single file.
+			sequence
+				Default. Each output is stored in timestamped files.
+		
+		outputMultiple
+			false
+				Default. All recorded changes are stored in a single file.
+			true
+				Each file changed gets its own log.
+		
+		timestampFormat
+			The timestamp format that all timestamps will be displayed in. See the guide below for making changes.
+			This option is empty by default, but uses the default timestamp value of "%Y-%m-%d %H.%M.%S"
+		
+		quietMode
+			true
+				Underwatch will not report changes to the screen, but will save output logs normally if that option is enabled.
+			
+			false
+				Default. Underwatch will report changes to the screen normally. 
+		
+		watchDescriptions
+			true
+				The _saveFile descriptions file will be monitored for changes.
+			false
+				Default.
+		
+		persistentMode
+			true
+				Underwatch will remain open after Undertale closes.
+			false
+				Underwatch closes when Undertale closes.
+	
+
+#Python datetime format codes
 
     %a  Locale’s abbreviated weekday name.
     %A  Locale’s full weekday name.      
