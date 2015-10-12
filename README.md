@@ -13,6 +13,7 @@ The core functionality of the Underwatch utility was created by DMNh.
 #Tidazi's Changes
 ##Underwatch 0.4
 * Fixed the bug where files are reported as modified but none of the values have changed.
+* When a file is modified, the number of changes detected is displayed.
 * Configuration is now handled by a single underwatch.ini file.
 * Created a simple icon for Underwatch.
 
