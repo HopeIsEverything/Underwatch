@@ -11,15 +11,15 @@ The core functionality of the Underwatch utility was created by dmnh.
 
 
 #Tidazi's Changes
-##Underwatch 0.3
+##Underwatch 0.4
 * Based on dmn_h's latest version of Underwatch.
 * Now compiled using cx_freeze instead of py2exe. The size of Underwatch was halved as a result.
 * Configuration is now handled by a single underwatch.ini file, rather than a _path file and flags.
 * Created a simple icon for Underwatch.
+* Removed "empty" change reports where the file is modified but none of the values have changed.
 	
 
 #Coming Soon...
-* Remove "empty" change reports where the file is modified but none of the values have changed.
 * Add descriptions to "Undertale.ini" change reports.
 * More robust support for timestamps.
 
@@ -27,15 +27,20 @@ The core functionality of the Underwatch utility was created by dmnh.
 #Underwatch Reports
 By default, any changes are printed out to the terminal in the following format:
 
-    file9 changed
-    (54) 4  >> 5  (Spared count)
-    (56) 81  >> 83  (Skipped count)
-    (549) 23374  >> 24727  (Play time)
-    
-    undertale.ini changed
-    [General]
-    Room: 312.000000 >> 12.000000
-    Time: 23374.000000 >> 24727.000000
+	file0 had 3 changes detected.
+	(56) 4349  >> 4351  (Skipped count)
+	(493) 1  >> 2  (unknown)
+	(549) 673344  >> 673637  (Play time)
+
+	file9 had 3 changes detected.
+	(56) 4349  >> 4351  (Skipped count)
+	(493) 1  >> 2  (unknown)
+	(549) 673344  >> 673637  (Play time)
+
+	undertale.ini had 1 change detected.
+	[General]
+	Time: 673344.000000 >> 673637.000000
+
 
 Changes to the save file include the line number and a description if one is known.
 
