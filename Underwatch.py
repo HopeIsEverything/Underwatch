@@ -4,69 +4,96 @@ import datetime
 import re
 from clint.textui import colored
 import sys
-from argparse import ArgumentParser
 import re
+import configparser
 
 class Underwatcher:
 	
-	def __init__(self, args):
+	def __init__(self):
 		
 		self.running = False
-		if not args.path:
-			self.setPath()
-		else:
-			self.path = args.path
-		self.timestamp = args.timestamp
-		if self.timestamp:
-			self.format = args.timestamp
-		if args.file:
-			self.outputMode = "file"
-		elif args.sequence:
-			self.outputMode = "sequence"
-			if not self.timestamp:
-				self.format = "%Y-%m-%d %H.%M.%S"
-				self.timestamp = True
-		else:
-			self.outputMode = "screen"
-		if args.outputPath:
-			self.outputPath = args.outputPath
-		else:
-			self.outputPath = os.getcwd()
-		self.quiet = args.quiet
-		self.exit = not args.noExit
-		self.mutlipleFiles = args.mutlipleFiles
 		
+		self.validateConfig()
+		
+		config = configparser.ConfigParser()
+		config.read('underwatch.ini')
+		
+		self.savePath = config['Undertale']['savePath']
+		self.outputPath = config['Underwatch']['outputPath']
+		if not os.path.exists(self.outputPath):
+			os.makedirs(self.outputPath)
+		
+		self.outputMode = config['Underwatch']['outputMode']
+		self.outputMultiple = config.getboolean('Underwatch','outputMultiple')
+		self.quietMode = config.getboolean('Underwatch','quietMode')
+		self.timestampFormat = config['Underwatch']['timestampFormat']
+		if self.timestampFormat == '':
+			self.timestamp = False
+			self.timestampFormat = "%Y-%m-%d %H.%M.%S"
+		else:
+			self.timestamp = True
+		
+		self.watchDescriptions = config.getboolean('Underwatch','watchDescriptions')
+		self.persistentMode = config.getboolean('Underwatch','persistentMode')
+		self.exit = not self.persistentMode
+
 		self.modtimes = {}
 		self.fileContents = {}
-		
-		self.watchSave = args.watchSave
-		if self.watchSave:
+
+		if self.watchDescriptions:
 			self.modtimes["_saveFile"] = os.path.getmtime("_saveFile")
 		self.setSaveDescriptions()
 		
-		for file in os.listdir(self.path):
-			filepath = os.path.join(self.path,file)
+		for file in os.listdir(self.savePath):
+			filepath = os.path.join(self.savePath,file)
 			self.modtimes[file] = os.path.getmtime(filepath)
 			self.readFile(filepath)
-		
-	def setPath(self):
-		
-		if os.path.isfile("_path"):
-			with open("_path", 'r') as f:
-				self.path = f.read()
-		else:
-			path = "C:\\Users\\<user>\\AppData\\Local\\UNDERTALE"
-			user = os.environ.get("USERNAME")
-			path = path.replace("<user>", user)
 	
-			print("Using {} as Undertale data path".format(path))
-			r = input("Is this correct? y/n: ")
-			if "n" in r.lower():
+	def validateConfig(self):
+		if os.path.isfile("underwatch.ini"):
+			print('Config OK.')
+		else:
+			self.createConfig()
+	
+	def createConfig(self):
+		print("No config file found. \nCreating one now...")
+
+		config = configparser.ConfigParser()
+		
+		path = "C:\\Users\\<user>\\AppData\\Local\\UNDERTALE"
+		user = os.environ.get("USERNAME")
+		path = path.replace("<user>", user)
+		print("Using {} as Undertale data path".format(path))
+		r = input("Is this correct? y/n: ")
+		if "n" in r.lower():
+			path = input("Path: ")
+			pathIsValid = os.path.exists(path)
+			while not (pathIsValid):
+				print("The path you entered was not valid.\n")
 				path = input("Path: ")
-			with open("_path", 'w') as f:
-				print(path, file=f, end="")
-			self.path = path
+				pathIsValid = os.path.exists(path)
 			
+		config['Undertale'] = {
+			'savePath': path}
+		
+		defaultOutputPath = os.getcwd()
+		defaultOutputPath += "\\outputLogs\\"
+		
+		config['Underwatch'] = {
+			'outputPath': defaultOutputPath,
+			'outputMode': 'sequence',
+			'outputMultiple': 'false',
+			'timestampFormat': '',
+			'quietMode':'false',
+			'watchDescriptions':'false',
+			'persistentMode':'false'
+		}
+		with open('underwatch.ini', 'w') as configfile:
+			config.write(configfile)
+		
+		self.validateConfig()
+	
+	
 	def setSaveDescriptions(self):
 		
 		with open("_saveFile", 'r') as f:
@@ -93,13 +120,13 @@ class Underwatcher:
 	
 	def start(self):
 		self.running = True
-		if not self.quiet:
+		if not self.quietMode:
 			print("Underwatch started.")
 		while True:
 			try:
-				for file in os.listdir(self.path):
+				for file in os.listdir(self.savePath):
 					self.currentFile = file
-					filepath = os.path.join(self.path,file)
+					filepath = os.path.join(self.savePath,file)
 					modtime = os.path.getmtime(filepath)
 					if file in self.modtimes:
 						modified = modtime != self.modtimes[file]
@@ -114,19 +141,14 @@ class Underwatcher:
 						if file == "playerachievementcache.dat" and self.exit: # As far as I know this file is only modified when exiting the game
 							sys.exit(0)										   # (other than on creation) and it's easier than checking for the process
 						self.modtimes[file] = modtime
-						if self.timestamp and not self.outputMode == "sequence":
+						if self.timestamp and self.outputMode != "sequence":
 							modDatetime = datetime.datetime.fromtimestamp(self.modtimes[file])
-							self.output("{}".format(modDatetime.strftime(self.format)))
-						if not self.mutlipleFiles:
-							self.output("{} changed".format(file))
-						elif not self.quiet:
-							print("{} changed".format(file))
+							self.output("{}".format(modDatetime.strftime(self.timestampFormat)))
 						if '.ini' in file:
 							self.parseini(filepath)
 						elif 'file' in file:
 							self.parseSave(filepath)
-						self.output("")
-				if self.watchSave:
+				if self.watchDescriptions:
 					modtime = os.path.getmtime("_saveFile")
 					if modtime != self.modtimes["_saveFile"]:
 						self.modtimes["_saveFile"] = modtime
@@ -138,10 +160,10 @@ class Underwatcher:
 	def output(self,output):
 		escapePattern = re.compile(r'\x1b[^m]*m')
 		cleanOutput = escapePattern.sub("", output)  # Strip the escape codes used to colour the ouput
-		if not self.quiet:
+		if not self.quietMode:
 			print(output)
 		if self.outputMode == "file":
-			if self.mutlipleFiles:
+			if self.outputMultiple:
 				filename = "{}.log".format(self.currentFile)
 			else:
 				filename = "Underwatch.log"
@@ -153,12 +175,12 @@ class Underwatcher:
 			with open(filepath, mode) as f:
 				print(cleanOutput, file=f)
 		elif self.outputMode == "sequence":
-			if self.mutlipleFiles:
+			if self.outputMultiple:
 				filename = "{}.{}.log".format(self.currentFile, "{}")
 			else:
 				filename = "Underwatch.{}.log"
 			modDatetime = datetime.datetime.fromtimestamp(self.modtimes[self.currentFile])
-			filepath = os.path.join(self.outputPath, filename.format(modDatetime.strftime(self.format)))
+			filepath = os.path.join(self.outputPath, filename.format(modDatetime.strftime(self.timestampFormat)))
 			if os.path.isfile(filepath):
 				mode = 'a'
 			else:
@@ -168,6 +190,8 @@ class Underwatcher:
 				
 	def parseini(self, filepath):
 		file = filepath.split("\\")[-1]
+		detectedChanges=0
+		allChanges = []
 		with open(filepath, 'r') as f:
 			for line in f.readlines():
 				if '[' in line:
@@ -184,14 +208,27 @@ class Underwatcher:
 						self.fileContents[file][section][key] = "_"
 					original = self.fileContents[file][section][key]
 					if value != original:
+						detectedChanges+=1
 						if not sectionPrinted:
-							self.output("[{}]".format(section))
+							#self.output("[{}]".format(section))
+							allChanges.append("[{}]".format(section))
 							sectionPrinted = True
-						self.output("{}: {} >> {}".format(key, colored.red(original), colored.green(value)))
+						#self.output("{}: {} >> {}".format(key, colored.red(original), colored.green(value)))
+						allChanges.append("{}: {} >> {}".format(key, colored.red(original), colored.green(value)))
 						self.fileContents[file][section][key] = value
-
+		if detectedChanges >= 1:
+			plural = ' '
+			if detectedChanges != 1:
+				plural = 's '
+			self.output(file + ' had ' + str(detectedChanges) + ' change' + plural + 'detected.')
+			for change in allChanges:
+				self.output(change)
+			self.output("")
+		
 	def parseSave(self, filepath):
 		file = filepath.split("\\")[-1]
+		detectedChanges=0
+		allChanges = []
 		with open(filepath, 'r') as f:
 			i = 0
 			for line in f.readlines():
@@ -204,22 +241,20 @@ class Underwatcher:
 					description = self.saveFileLines[i]
 					if description == "":
 						description = "unknown"
-					self.output("({}) {} >> {} ({})".format(i+1, colored.red(original), colored.green(line), description).replace('\n','').replace('\r',''))
+					#self.output("({}) {} >> {} ({})".format(i+1, colored.red(original), colored.green(line), description).replace('\n','').replace('\r',''))
+					allChanges.append("({}) {} >> {} ({})".format(i+1, colored.red(original), colored.green(line), description).replace('\n','').replace('\r',''))
+					detectedChanges+=1
 					self.fileContents[file][i] = line
 				i += 1
+		if detectedChanges >= 1:
+			plural = ' '
+			if detectedChanges != 1:
+				plural = 's '
+			self.output(file + ' had ' + str(detectedChanges) + ' change' + plural + 'detected.')
+			for change in allChanges:
+				self.output(change)
+			self.output("")
 
 if __name__ == "__main__":
-	parser = ArgumentParser()
-	parser.add_argument("-p", "--path", dest="path", help="explicitly set the Undertale save folder, overrides _path file")
-	fileOutGroup = parser.add_mutually_exclusive_group()
-	fileOutGroup.add_argument("-f", "--file", action="store_true", help="output all changes to Underwatch.log.")
-	fileOutGroup.add_argument("-s", "--sequence", action="store_true", help="output each change to a timestamped file. The format is %%Y-%%m-%%d %%H.%%M.%%S by default, and can be changed with -t")
-	parser.add_argument("-m", "--multiple", dest="mutlipleFiles", action="store_true", help="output changes to multiple files (save0.log, undertale.ini.log, etc.)")
-	parser.add_argument("-o", "--out", dest="outputPath", metavar="PATH", help="explicitly set the output directory, default is the working directory")
-	parser.add_argument("-t", "--time", nargs="?", dest="timestamp", metavar="FORMAT", const="[%H:%M:%S]", help="output a timestamp with each change. The default format is [%%H:%%M:%%S], see readme.txt for format options")
-	parser.add_argument("-u", "--update", dest="watchSave", action="store_true", help="monitor _saveFile, allows updating of descriptions without restarting")
-	parser.add_argument("-q", "--quiet", help="don't ouput to the screen.", action="store_true")
-	parser.add_argument("-x", "--no-exit", dest="noExit", action="store_true", help="prevent Underwatch from closing when Undertale closes (CRTL+C to kill Underwatch)")
-	args = parser.parse_args()
-	watcher = Underwatcher(args)
+	watcher = Underwatcher()
 	watcher.start()
