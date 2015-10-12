@@ -52,58 +52,57 @@ It will also confirm the directory for Undertale data, and create the default di
 
 -----
 
-Below you will find a list of the various configuration options.
+#Configuration Options
 
+	[Undertale]
+		savePath 
+			The directory that the Undertale save files are stored in.
+			This is usually C:\Users\<username>\AppData\Local\UNDERTALE.
 
-The [Undertale] section only has one option.
-	savePath 
-		The directory that the Undertale save files are stored in.
-		This is usually C:\Users\<username>\AppData\Local\UNDERTALE.
+	[Underwatch]
+		outputPath
+			The output path for log files.
+			This defaults to a subdirectory called "outputLogs" within the Underwatch directory.
 
-The [Underwatch] section is where you can change the way Underwatch functions.
-	outputPath
-		The output path for log files.
-		This defaults to a subdirectory called "outputLogs" within the Underwatch directory.
-
-	outputMode
-		screen
-			No file output. Only displays changes on the screen.
-		file
-			All output is stored to a single file.
-		sequence
-			Default. Each output is stored in timestamped files.
-	
-	outputMultiple
-		false
-			Default. All recorded changes are stored in a single file.
-		true
-			Each file changed gets its own log.
-	
-	timestampFormat
-		The timestamp format that all timestamps will be displayed in. See the guide below for making changes.
-		This option is empty by default, but uses the default timestamp value of "%Y-%m-%d %H.%M.%S"
-	
-	quietMode
-		true
-			Underwatch will not report changes to the screen, but will save output logs normally if that option is enabled.
+		outputMode
+			screen
+				No file output. Only displays changes on the screen.
+			file
+				All output is stored to a single file.
+			sequence
+				Default. Each output is stored in timestamped files.
 		
-		false
-			Default. Underwatch will report changes to the screen normally. 
-	
-	watchDescriptions
-		true
-			The _saveFile descriptions file will be monitored for changes.
-		false
-			Default.
-	
-	persistentMode
-		true
-			Underwatch will remain open after Undertale closes.
-		false
-			Underwatch closes when Undertale closes.
+		outputMultiple
+			false
+				Default. All recorded changes are stored in a single file.
+			true
+				Each file changed gets its own log.
+		
+		timestampFormat
+			The timestamp format that all timestamps will be displayed in. See the guide below for making changes.
+			This option is empty by default, but uses the default timestamp value of "%Y-%m-%d %H.%M.%S"
+		
+		quietMode
+			true
+				Underwatch will not report changes to the screen, but will save output logs normally if that option is enabled.
+			
+			false
+				Default. Underwatch will report changes to the screen normally. 
+		
+		watchDescriptions
+			true
+				The _saveFile descriptions file will be monitored for changes.
+			false
+				Default.
+		
+		persistentMode
+			true
+				Underwatch will remain open after Undertale closes.
+			false
+				Underwatch closes when Undertale closes.
 	
 
-Python datetime format codes
+#Python datetime format codes
 
     %a  Locale’s abbreviated weekday name.
     %A  Locale’s full weekday name.      
