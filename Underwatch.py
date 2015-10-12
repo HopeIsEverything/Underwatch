@@ -144,15 +144,10 @@ class Underwatcher:
 						if self.timestamp and self.outputMode != "sequence":
 							modDatetime = datetime.datetime.fromtimestamp(self.modtimes[file])
 							self.output("{}".format(modDatetime.strftime(self.timestampFormat)))
-						if self.outputMultiple != True:
-							self.output("{} changed".format(file))
-						elif not self.quietMode:
-							print("{} changed".format(file))
 						if '.ini' in file:
 							self.parseini(filepath)
 						elif 'file' in file:
 							self.parseSave(filepath)
-						self.output("")
 				if self.watchDescriptions:
 					modtime = os.path.getmtime("_saveFile")
 					if modtime != self.modtimes["_saveFile"]:
@@ -195,6 +190,8 @@ class Underwatcher:
 				
 	def parseini(self, filepath):
 		file = filepath.split("\\")[-1]
+		detectedChanges=0
+		allChanges = []
 		with open(filepath, 'r') as f:
 			for line in f.readlines():
 				if '[' in line:
@@ -211,14 +208,27 @@ class Underwatcher:
 						self.fileContents[file][section][key] = "_"
 					original = self.fileContents[file][section][key]
 					if value != original:
+						detectedChanges+=1
 						if not sectionPrinted:
-							self.output("[{}]".format(section))
+							#self.output("[{}]".format(section))
+							allChanges.append("[{}]".format(section))
 							sectionPrinted = True
-						self.output("{}: {} >> {}".format(key, colored.red(original), colored.green(value)))
+						#self.output("{}: {} >> {}".format(key, colored.red(original), colored.green(value)))
+						allChanges.append("{}: {} >> {}".format(key, colored.red(original), colored.green(value)))
 						self.fileContents[file][section][key] = value
-
+		if detectedChanges >= 1:
+			plural = ' '
+			if detectedChanges != 1:
+				plural = 's '
+			self.output(file + ' had ' + str(detectedChanges) + ' change' + plural + 'detected.')
+			for change in allChanges:
+				self.output(change)
+			self.output("")
+		
 	def parseSave(self, filepath):
 		file = filepath.split("\\")[-1]
+		detectedChanges=0
+		allChanges = []
 		with open(filepath, 'r') as f:
 			i = 0
 			for line in f.readlines():
@@ -231,9 +241,19 @@ class Underwatcher:
 					description = self.saveFileLines[i]
 					if description == "":
 						description = "unknown"
-					self.output("({}) {} >> {} ({})".format(i+1, colored.red(original), colored.green(line), description).replace('\n','').replace('\r',''))
+					#self.output("({}) {} >> {} ({})".format(i+1, colored.red(original), colored.green(line), description).replace('\n','').replace('\r',''))
+					allChanges.append("({}) {} >> {} ({})".format(i+1, colored.red(original), colored.green(line), description).replace('\n','').replace('\r',''))
+					detectedChanges+=1
 					self.fileContents[file][i] = line
 				i += 1
+		if detectedChanges >= 1:
+			plural = ' '
+			if detectedChanges != 1:
+				plural = 's '
+			self.output(file + ' had ' + str(detectedChanges) + ' change' + plural + 'detected.')
+			for change in allChanges:
+				self.output(change)
+			self.output("")
 
 if __name__ == "__main__":
 	watcher = Underwatcher()
