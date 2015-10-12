@@ -1,7 +1,7 @@
 #Underwatch
 Underwatch is a utility for tracking changes to the ini and save files for Undertale.
 
-The core functionality of the Underwatch utility was created by dmnh.
+The core functionality of the Underwatch utility was created by DMNh.
 
 #Tools Used
 * Python (3.4)
